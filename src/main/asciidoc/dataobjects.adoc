@@ -1,0 +1,29 @@
+= Cheatsheets
+
+[[AeronClientOptions]]
+== AeronClientOptions
+
+++++
+++++
+'''
+
+[cols=">25%,^25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[directory]]`directory`|`String`|-
+|===
+
+[[AeronSubscriptionOption]]
+== AeronSubscriptionOption
+
+++++
+++++
+'''
+
+[cols=">25%,^25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|===
+
