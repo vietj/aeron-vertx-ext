@@ -9,6 +9,7 @@ import io.vertx.core.buffer.Buffer;
 import org.agrona.DirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 
+import java.nio.channels.ClosedChannelException;
 import java.util.ArrayDeque;
 
 /**
@@ -16,9 +17,12 @@ import java.util.ArrayDeque;
  */
 class AeronPublicationImpl implements AeronPublication {
 
-  private static final int BATCH_SIZE = 100;
+  private int maxSize = DEFAULT_MAX_SIZE;
+  private int batchSize = DEFAULT_BATCH_SIZE;
+  private int offerRetries = DEFAULT_OFFER_NUM_RETRIES;
+  private long offerRetryDelay = DEFAULT_OFFER_RETRY_DELAY;
+  private long connectRetryDelay = DEFAULT_CONNECT_RETRY_DELAY;
 
-  private int maxSize = 1024 * 1024; // 1 MB
   private final Context context;
   private final Vertx vertx;
   private final Publication pub;
@@ -48,26 +52,56 @@ class AeronPublicationImpl implements AeronPublication {
     return this;
   }
 
-  private void checkPending() {
-    int num = BATCH_SIZE;
-    while (!pending.isEmpty() && num-- > 0) {
-      DirectBuffer peek = pending.peek();
-      long result = pub.offer(peek);
-      if (result < 0L) {
-        break;
+  private void schedule(long delay, boolean reschedule) {
+    if (timerID >= 0) {
+      if (reschedule) {
+        vertx.cancelTimer(timerID);
       } else {
-        pending.remove();
-        pendingSize -= peek.capacity();
+        return;
       }
     }
-    if (pending.size() > 0 && timerID < 0) {
-      // The schedule strategy should be configurable and also depends on how many message we sent
-      // 1ms will cause 1ms batch delay in pumps
-      // plain run on context may consume too much CPU
-      timerID = vertx.setTimer(1, id -> {
-        timerID = -1;
-        checkPending();
-      });
+    timerID = vertx.setTimer(delay, id -> {
+      timerID = -1;
+      checkPending();
+    });
+  }
+
+  private void checkPending() {
+    int num = batchSize;
+    while (!pending.isEmpty() && num-- > 0) {
+      DirectBuffer current = pending.peek();
+      long result = pub.offer(current);
+      if (result < 0L) {
+        int retries = offerRetries;
+        while (result < 0L) {
+          if (result == Publication.BACK_PRESSURED || result == Publication.ADMIN_ACTION) {
+            if (retries-- > 0) {
+              Thread.yield();
+              result = pub.offer(current);
+            } else {
+              schedule(offerRetryDelay, true);
+              return;
+            }
+          } else if (result == Publication.NOT_CONNECTED) {
+            schedule(connectRetryDelay, true);
+            return;
+          } else {
+            Handler<Throwable> handler = exceptionHandler;
+            if (handler != null) {
+              ClosedChannelException err = new ClosedChannelException();
+              vertx.runOnContext(v -> {
+                handler.handle(err);
+              });
+            }
+            return;
+          }
+        }
+      }
+      pending.remove();
+      pendingSize -= current.capacity();
+    }
+    if (pending.size() > 0) {
+      schedule(offerRetryDelay, false);
     }
     Handler<Void> h = drainHandler;
     if (pendingSize < maxSize / 2 &&  h != null) {
@@ -93,10 +127,43 @@ class AeronPublicationImpl implements AeronPublication {
 
   @Override
   public void end() {
+    pub.close();
   }
 
   @Override
   public boolean writeQueueFull() {
     return pendingSize > maxSize;
+  }
+
+  public AeronPublication setBatchSize(int size) {
+    if (size < 1) {
+      throw new IllegalArgumentException("Batch size must be > 0");
+    }
+    this.batchSize = size;
+    return this;
+  }
+
+  public AeronPublication setOfferRetries(int retries) {
+    if (retries < 0) {
+      throw new IllegalArgumentException("Offer retries must be >= 0");
+    }
+    this.offerRetries = retries;
+    return this;
+  }
+
+  public AeronPublication setOfferRetryDelay(int delay) {
+    if (delay < 1) {
+      throw new IllegalArgumentException("Offer retry delay must be > 0");
+    }
+    this.offerRetryDelay = delay;
+    return this;
+  }
+
+  public AeronPublication setConnectRetryDelay(int delay) {
+    if (delay < 1) {
+      throw new IllegalArgumentException("Connect retry delay must be > 0");
+    }
+    this.connectRetryDelay = delay;
+    return this;
   }
 }

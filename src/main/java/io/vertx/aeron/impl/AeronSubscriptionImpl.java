@@ -4,7 +4,7 @@ import io.aeron.ControlledFragmentAssembler;
 import io.aeron.Subscription;
 import io.aeron.logbuffer.ControlledFragmentHandler;
 import io.vertx.aeron.AeronSubscription;
-import io.vertx.aeron.AeronSubscriptionOption;
+import io.vertx.aeron.AeronSubscriptionOptions;
 import io.vertx.core.Context;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
@@ -14,13 +14,13 @@ import io.vertx.core.buffer.Buffer;
  */
 public class AeronSubscriptionImpl implements AeronSubscription {
 
-  private final AeronSubscriptionOption options;
+  private final AeronSubscriptionOptions options;
   private final Context context;
   private final Subscription sub;
   private boolean paused;
   private ControlledFragmentHandler fragmentHandler;
 
-  public AeronSubscriptionImpl(Context context, AeronSubscriptionOption options, Subscription sub) {
+  public AeronSubscriptionImpl(Context context, AeronSubscriptionOptions options, Subscription sub) {
     this.context = context;
     this.sub = sub;
     this.options = options;

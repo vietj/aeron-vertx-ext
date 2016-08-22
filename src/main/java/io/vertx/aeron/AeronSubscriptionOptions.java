@@ -7,15 +7,15 @@ import io.vertx.core.json.JsonObject;
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
 @DataObject
-public class AeronSubscriptionOption {
+public class AeronSubscriptionOptions {
 
-  public AeronSubscriptionOption() {
+  public AeronSubscriptionOptions() {
   }
 
-  public AeronSubscriptionOption(AeronSubscriptionOption that) {
+  public AeronSubscriptionOptions(AeronSubscriptionOptions that) {
   }
 
-  public AeronSubscriptionOption(JsonObject json) {
+  public AeronSubscriptionOptions(JsonObject json) {
   }
 
 }

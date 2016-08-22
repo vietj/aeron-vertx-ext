@@ -14,8 +14,8 @@
 |[[directory]]`directory`|`String`|-
 |===
 
-[[AeronSubscriptionOption]]
-== AeronSubscriptionOption
+[[AeronSubscriptionOptions]]
+== AeronSubscriptionOptions
 
 ++++
 ++++

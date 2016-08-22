@@ -2,18 +2,13 @@ package io.vertx.aeron;
 
 import io.aeron.Aeron;
 import io.aeron.Subscription;
-import io.aeron.driver.MediaDriver;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
-import java.io.File;
+import java.nio.channels.ClosedChannelException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -97,5 +92,21 @@ public class PublicationTest extends AeronTestBase {
       }
     }
     drainedEvent.await(10000);
+  }
+
+  @Test
+  public void testClosed(TestContext context) throws Exception {
+    Vertx vertx = Vertx.vertx();
+    AeronClient client = AeronClient.create(vertx, new AeronClientOptions().setDirectory(mediaDriver.aeronDirectoryName()));
+    Async async = context.async();
+    client.addPublication("aeron:ipc", 10, ar -> {
+      AeronPublication pub = ar.result();
+      pub.exceptionHandler(err -> {
+        context.assertTrue(err instanceof ClosedChannelException);
+        async.complete();
+      });
+      pub.end();
+      pub.write(Buffer.buffer("foobar"));
+    });
   }
 }
