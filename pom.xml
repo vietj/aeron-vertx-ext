@@ -114,6 +114,9 @@
             <io.netty.leakDetectionLevel>PARANOID</io.netty.leakDetectionLevel>
           </systemPropertyVariables>
           <argLine>-server -Xms128m -Xmx1024m -XX:NewRatio=2</argLine>
+<!--
+          <argLine>-server -Xms128m -Xmx1024m -XX:NewRatio=2 -XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=duration=60s,filename=aeron_recording.jfr</argLine>
+-->
         </configuration>
       </plugin>
     </plugins>

@@ -3,8 +3,6 @@ package io.vertx.aeron.client;
 import io.aeron.Aeron;
 import io.aeron.Publication;
 import io.vertx.aeron.AeronTestBase;
-import io.vertx.aeron.client.AeronClient;
-import io.vertx.aeron.client.AeronClientOptions;
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
@@ -23,10 +21,18 @@ import static org.junit.Assert.assertTrue;
  */
 public class SubscriptionTest extends AeronTestBase {
 
+  private String dirName;
+
+  @Override
+  public void before() {
+    super.before();
+    dirName = createMediaDriver();
+  }
+
   @Test
   public void testBasic(TestContext context) {
     Vertx vertx = Vertx.vertx();
-    AeronClient client = AeronClient.create(vertx, new AeronClientOptions().setDirectory(mediaDriver.aeronDirectoryName()));
+    AeronClient client = AeronClient.create(vertx, new AeronClientOptions().setDirectory(dirName));
     Async async = context.async();
     client.addSubscription("aeron:ipc", 10, context.asyncAssertSuccess(sub -> {
       sub.handler(buff -> {
@@ -34,7 +40,7 @@ public class SubscriptionTest extends AeronTestBase {
         async.complete();
       });
     }));
-    Aeron.Context ctx = new Aeron.Context().aeronDirectoryName(mediaDriver.aeronDirectoryName());
+    Aeron.Context ctx = new Aeron.Context().aeronDirectoryName(dirName);
     try (Aeron aeron = Aeron.connect(ctx);
          Publication publication = aeron.addPublication("aeron:ipc", 10))
     {
@@ -45,7 +51,7 @@ public class SubscriptionTest extends AeronTestBase {
   @Test
   public void testPauseAtBeginning(TestContext context) {
     Vertx vertx = Vertx.vertx();
-    AeronClient client = AeronClient.create(vertx, new AeronClientOptions().setDirectory(mediaDriver.aeronDirectoryName()));
+    AeronClient client = AeronClient.create(vertx, new AeronClientOptions().setDirectory(dirName));
     Async async = context.async();
     AtomicInteger count = new AtomicInteger();
     CompletableFuture<Void> resume = new CompletableFuture<>();
@@ -64,7 +70,7 @@ public class SubscriptionTest extends AeronTestBase {
         });
       });
     }));
-    Aeron.Context ctx = new Aeron.Context().aeronDirectoryName(mediaDriver.aeronDirectoryName());
+    Aeron.Context ctx = new Aeron.Context().aeronDirectoryName(dirName);
     try (Aeron aeron = Aeron.connect(ctx);
          Publication publication = aeron.addPublication("aeron:ipc", 10))
     {

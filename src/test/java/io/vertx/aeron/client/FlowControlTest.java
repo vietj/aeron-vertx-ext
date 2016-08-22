@@ -1,8 +1,6 @@
 package io.vertx.aeron.client;
 
 import io.vertx.aeron.AeronTestBase;
-import io.vertx.aeron.client.AeronClient;
-import io.vertx.aeron.client.AeronClientOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.streams.ReadStream;
@@ -17,12 +15,20 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
 public class FlowControlTest extends AeronTestBase {
+  
+  private String dirName;
+
+  @Override
+  public void before() {
+    super.before();
+    dirName = createMediaDriver();
+  }
 
   @Test
   public void testSimple(TestContext context) {
     Vertx vertx = Vertx.vertx();
-    AeronClient pubClient = AeronClient.create(vertx, new AeronClientOptions().setDirectory(mediaDriver.aeronDirectoryName()));
-    AeronClient subClient = AeronClient.create(vertx, new AeronClientOptions().setDirectory(mediaDriver.aeronDirectoryName()));
+    AeronClient pubClient = AeronClient.create(vertx, new AeronClientOptions().setDirectory(dirName));
+    AeronClient subClient = AeronClient.create(vertx, new AeronClientOptions().setDirectory(dirName));
     final int numBatches = 10000;
     final int batchSize = 200;
     Async done = context.async();
@@ -49,8 +55,8 @@ public class FlowControlTest extends AeronTestBase {
   @Test
   public void testPauseResume(TestContext context) {
     Vertx vertx = Vertx.vertx();
-    AeronClient pubClient = AeronClient.create(vertx, new AeronClientOptions().setDirectory(mediaDriver.aeronDirectoryName()));
-    AeronClient subClient = AeronClient.create(vertx, new AeronClientOptions().setDirectory(mediaDriver.aeronDirectoryName()));
+    AeronClient pubClient = AeronClient.create(vertx, new AeronClientOptions().setDirectory(dirName));
+    AeronClient subClient = AeronClient.create(vertx, new AeronClientOptions().setDirectory(dirName));
     final int numBatches = 10000;
     final int batchSize = 200;
     Async done = context.async();

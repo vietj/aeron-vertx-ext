@@ -48,9 +48,9 @@ public class AeronSubscriptionImpl implements AeronSubscription {
 
   void read() {
     if (!paused) {
-      sub.controlledPoll(fragmentHandler, 10);
+      sub.controlledPoll(fragmentHandler, 100);
       if (!paused) {
-        context.runOnContext(v -> {
+        context.owner().setTimer(1, v -> {
           read();
         });
       }

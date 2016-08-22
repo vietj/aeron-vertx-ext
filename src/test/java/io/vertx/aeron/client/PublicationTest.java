@@ -3,9 +3,6 @@ package io.vertx.aeron.client;
 import io.aeron.Aeron;
 import io.aeron.Subscription;
 import io.vertx.aeron.AeronTestBase;
-import io.vertx.aeron.client.AeronClient;
-import io.vertx.aeron.client.AeronClientOptions;
-import io.vertx.aeron.client.AeronPublication;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.unit.Async;
@@ -26,17 +23,25 @@ import static org.junit.Assert.assertEquals;
  */
 public class PublicationTest extends AeronTestBase {
 
+  private String dirName;
+
+  @Override
+  public void before() {
+    super.before();
+    dirName = createMediaDriver();
+  }
+
   @Test
   public void testBasic() throws Exception {
     Vertx vertx = Vertx.vertx();
-    AeronClient client = AeronClient.create(vertx, new AeronClientOptions().setDirectory(mediaDriver.aeronDirectoryName()));
+    AeronClient client = AeronClient.create(vertx, new AeronClientOptions().setDirectory(dirName));
     client.addPublication("aeron:ipc", 10, ar -> {
       AeronPublication pub = ar.result();
       pub.write(Buffer.buffer("Hello"));
       pub.write(Buffer.buffer("World"));
     });
     List<String> received = new ArrayList<>();
-    Aeron.Context ctx = new Aeron.Context().aeronDirectoryName(mediaDriver.aeronDirectoryName());
+    Aeron.Context ctx = new Aeron.Context().aeronDirectoryName(dirName);
     try (Aeron aeron = Aeron.connect(ctx);
          Subscription subscription = aeron.addSubscription("aeron:ipc", 10))
     {
@@ -60,7 +65,7 @@ public class PublicationTest extends AeronTestBase {
   @Test
   public void testBufferWhenNoSubscription(TestContext context) throws Exception {
     Vertx vertx = Vertx.vertx();
-    AeronClient client = AeronClient.create(vertx, new AeronClientOptions().setDirectory(mediaDriver.aeronDirectoryName()));
+    AeronClient client = AeronClient.create(vertx, new AeronClientOptions().setDirectory(dirName));
     Async async = context.async();
     AtomicInteger expected = new AtomicInteger();
     Async drainedEvent = context.async();
@@ -77,7 +82,7 @@ public class PublicationTest extends AeronTestBase {
       });
       async.complete();
     });
-    Aeron.Context ctx = new Aeron.Context().aeronDirectoryName(mediaDriver.aeronDirectoryName());
+    Aeron.Context ctx = new Aeron.Context().aeronDirectoryName(dirName);
     try (Aeron aeron = Aeron.connect(ctx)) {
       async.awaitSuccess(10000);
       try (Subscription subscription = aeron.addSubscription("aeron:ipc", 10)) {
@@ -101,7 +106,7 @@ public class PublicationTest extends AeronTestBase {
   @Test
   public void testClosed(TestContext context) throws Exception {
     Vertx vertx = Vertx.vertx();
-    AeronClient client = AeronClient.create(vertx, new AeronClientOptions().setDirectory(mediaDriver.aeronDirectoryName()));
+    AeronClient client = AeronClient.create(vertx, new AeronClientOptions().setDirectory(dirName));
     Async async = context.async();
     client.addPublication("aeron:ipc", 10, ar -> {
       AeronPublication pub = ar.result();
