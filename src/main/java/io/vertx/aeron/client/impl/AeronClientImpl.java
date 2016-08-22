@@ -1,12 +1,12 @@
-package io.vertx.aeron.impl;
+package io.vertx.aeron.client.impl;
 
 import io.aeron.Aeron;
 import io.aeron.Publication;
-import io.vertx.aeron.AeronClient;
-import io.vertx.aeron.AeronClientOptions;
-import io.vertx.aeron.AeronPublication;
-import io.vertx.aeron.AeronSubscription;
-import io.vertx.aeron.AeronSubscriptionOptions;
+import io.vertx.aeron.client.AeronClient;
+import io.vertx.aeron.client.AeronClientOptions;
+import io.vertx.aeron.client.AeronPublication;
+import io.vertx.aeron.client.AeronSubscription;
+import io.vertx.aeron.client.AeronSubscriptionOptions;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;

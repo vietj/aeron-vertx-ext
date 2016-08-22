@@ -1,6 +1,6 @@
-package io.vertx.aeron;
+package io.vertx.aeron.client;
 
-import io.vertx.aeron.impl.AeronClientImpl;
+import io.vertx.aeron.client.impl.AeronClientImpl;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;

@@ -1,4 +1,4 @@
-package io.vertx.aeron;
+package io.vertx.aeron.client;
 
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;

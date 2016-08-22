@@ -1,10 +1,10 @@
-package io.vertx.aeron.impl;
+package io.vertx.aeron.client.impl;
 
 import io.aeron.ControlledFragmentAssembler;
 import io.aeron.Subscription;
 import io.aeron.logbuffer.ControlledFragmentHandler;
-import io.vertx.aeron.AeronSubscription;
-import io.vertx.aeron.AeronSubscriptionOptions;
+import io.vertx.aeron.client.AeronSubscription;
+import io.vertx.aeron.client.AeronSubscriptionOptions;
 import io.vertx.core.Context;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;

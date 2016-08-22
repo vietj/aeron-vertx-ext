@@ -14,15 +14,15 @@
  * under the License.
  */
 
-package io.vertx.aeron;
+package io.vertx.aeron.client;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.JsonArray;
 
 /**
- * Converter for {@link io.vertx.aeron.AeronClientOptions}.
+ * Converter for {@link io.vertx.aeron.client.AeronClientOptions}.
  *
- * NOTE: This class has been automatically generated from the {@link io.vertx.aeron.AeronClientOptions} original class using Vert.x codegen.
+ * NOTE: This class has been automatically generated from the {@link io.vertx.aeron.client.AeronClientOptions} original class using Vert.x codegen.
  */
 public class AeronClientOptionsConverter {
 

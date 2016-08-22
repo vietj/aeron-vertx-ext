@@ -1,7 +1,11 @@
-package io.vertx.aeron;
+package io.vertx.aeron.client;
 
 import io.aeron.Aeron;
 import io.aeron.Subscription;
+import io.vertx.aeron.AeronTestBase;
+import io.vertx.aeron.client.AeronClient;
+import io.vertx.aeron.client.AeronClientOptions;
+import io.vertx.aeron.client.AeronPublication;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.unit.Async;

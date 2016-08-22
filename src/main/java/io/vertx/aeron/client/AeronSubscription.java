@@ -1,4 +1,4 @@
-package io.vertx.aeron;
+package io.vertx.aeron.client;
 
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.Handler;

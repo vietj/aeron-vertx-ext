@@ -1,7 +1,7 @@
-package io.vertx.aeron.impl;
+package io.vertx.aeron.client.impl;
 
 import io.aeron.Publication;
-import io.vertx.aeron.AeronPublication;
+import io.vertx.aeron.client.AeronPublication;
 import io.vertx.core.Context;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
