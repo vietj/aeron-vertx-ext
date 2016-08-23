@@ -46,6 +46,12 @@ public class AeronClientImpl implements AeronClient, Closeable {
     vertx.addCloseHook(this);
   }
 
+  public AeronClientImpl(VertxInternal vertx, Aeron aeron) {
+    this.aeron = aeron;
+    this.vertx = vertx;
+    vertx.addCloseHook(this);
+  }
+
   @Override
   public void close() {
     vertx.removeCloseHook(this);

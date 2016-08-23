@@ -1,7 +1,9 @@
 package io.vertx.aeron.client;
 
+import io.aeron.Aeron;
 import io.vertx.aeron.client.impl.AeronClientImpl;
 import io.vertx.codegen.annotations.Fluent;
+import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
@@ -16,6 +18,15 @@ public interface AeronClient {
 
   static AeronClient create(Vertx vertx, AeronClientOptions options) {
     return new AeronClientImpl((VertxInternal) vertx, options);
+  }
+
+  static AeronClient create(Vertx vertx) {
+    return new AeronClientImpl((VertxInternal) vertx, new AeronClientOptions());
+  }
+
+  @GenIgnore
+  static AeronClient create(Vertx vertx, Aeron aeron) {
+    return new AeronClientImpl((VertxInternal) vertx, aeron);
   }
 
   @Fluent
