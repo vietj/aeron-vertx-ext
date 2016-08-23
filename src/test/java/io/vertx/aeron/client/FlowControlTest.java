@@ -1,7 +1,6 @@
 package io.vertx.aeron.client;
 
 import io.vertx.aeron.AeronIPCTestBase;
-import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.streams.WriteStream;
 import io.vertx.ext.unit.Async;
@@ -25,7 +24,7 @@ public class FlowControlTest extends AeronIPCTestBase {
     Async subSync = context.async();
     subClient.addSubscription("aeron:ipc", 10, ar -> {
       AeronSubscription consumer = ar.result();
-      consumer.setBatchSize(1000);
+      consumer.batchSize(1000);
       AtomicInteger cnt = new AtomicInteger();
       consumer.handler(msg -> {
         int c = cnt.incrementAndGet();
@@ -53,7 +52,7 @@ public class FlowControlTest extends AeronIPCTestBase {
     Async subSync = context.async();
     subClient.addSubscription("aeron:ipc", 10, ar -> {
       AeronSubscription consumer = ar.result();
-      consumer.setBatchSize(1000);
+      consumer.batchSize(1000);
       AtomicInteger cnt = new AtomicInteger();
       consumer.handler(msg -> {
         int c = cnt.incrementAndGet();

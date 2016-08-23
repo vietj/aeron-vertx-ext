@@ -6,6 +6,8 @@ import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.streams.ReadStream;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
@@ -13,7 +15,8 @@ import io.vertx.core.streams.ReadStream;
 public interface AeronSubscription extends ReadStream<Buffer> {
 
   int DEFAULT_BATCH_SIZE = 100;
-  long DEFAULT_BATCH_DELAY = 1;
+  long DEFAULT_BATCH_INTERVAL_DELAY = 1;
+  TimeUnit DEFAULT_BATCH_INTERVAL_UNIT = TimeUnit.MILLISECONDS;
 
   /**
    * Set the number of buffers polled from the {@code Subscription}.
@@ -22,16 +25,17 @@ public interface AeronSubscription extends ReadStream<Buffer> {
    * @return a reference to this, so the API can be used fluently
    */
   @Fluent
-  AeronSubscription setBatchSize(int size);
+  AeronSubscription batchSize(int size);
 
   /**
-   * Set the delay between polls of the {@code Subscription}.
+   * Set the delay between 2 polls of the {@code Subscription}.
    *
-   * @param delay the delay in milliseconds
+   * @param delay the delay between two intervals
+   * @param unit the interval time unit
    * @return a reference to this, so the API can be used fluently
    */
   @Fluent
-  AeronSubscription setBatchDelay(long delay);
+  AeronSubscription batchInterval(long delay, TimeUnit unit);
 
   @Override
   AeronSubscription exceptionHandler(Handler<Throwable> handler);

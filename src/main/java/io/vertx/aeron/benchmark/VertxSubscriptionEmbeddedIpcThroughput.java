@@ -173,6 +173,7 @@ public class VertxSubscriptionEmbeddedIpcThroughput {
     public void run(AeronClient client) {
       client.addSubscription(CHANNEL, STREAM_ID, ar -> {
         AeronSubscription sub = ar.result();
+//        sub.setBatchSize(1000);
         subscription = sub;
         sub.handler(buff -> {
           UNSAFE.putOrderedLong(this, TOTAL_BYTES_OFFSET, totalBytes + buff.length());

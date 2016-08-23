@@ -4,7 +4,6 @@ import io.aeron.Aeron;
 import io.aeron.Publication;
 import io.vertx.aeron.AeronIPCTestBase;
 import io.vertx.core.Context;
-import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import org.agrona.concurrent.UnsafeBuffer;
@@ -41,7 +40,7 @@ public class SubscriptionTest extends AeronIPCTestBase {
     AeronClient client = AeronClient.create(vertx, new AeronClientOptions().setDirectory(dirName));
     Async async = context.async();
     client.addSubscription("aeron:ipc", 10, context.asyncAssertSuccess(sub -> {
-      sub.setBatchSize(batchSize);
+      sub.batchSize(batchSize);
       AtomicInteger count = new AtomicInteger();
       sub.handler(buff -> {
         assertEquals("HELLO", buff.toString());
@@ -69,7 +68,7 @@ public class SubscriptionTest extends AeronIPCTestBase {
     CompletableFuture<Void> resume = new CompletableFuture<>();
     client.addSubscription("aeron:ipc", 10, context.asyncAssertSuccess(sub -> {
       Context ctx = vertx.getOrCreateContext();
-      sub.setBatchSize(1000);
+      sub.batchSize(1000);
       sub.handler(buff -> {
         assertEquals("HELLO", buff.toString());
         if (count.decrementAndGet() == 0) {

@@ -11,6 +11,8 @@ import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.impl.ContextInternal;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
@@ -24,12 +26,13 @@ class AeronSubscriptionImpl implements AeronSubscription, Closeable {
   private ControlledFragmentHandler fragmentHandler;
   private int batchSize;
   private int numBatch;
-  private long pollDelay = DEFAULT_BATCH_DELAY;
+  private long intervalDelay = DEFAULT_BATCH_INTERVAL_DELAY;
+  private TimeUnit intervalUnit = DEFAULT_BATCH_INTERVAL_UNIT;
 
   AeronSubscriptionImpl(ContextInternal context, Subscription sub) {
     this.context = context;
     this.sub = sub;
-    setBatchSize(DEFAULT_BATCH_SIZE);
+    batchSize(DEFAULT_BATCH_SIZE);
     context.addCloseHook(this);
   }
 
@@ -55,7 +58,7 @@ class AeronSubscriptionImpl implements AeronSubscription, Closeable {
   }
 
   @Override
-  public AeronSubscription setBatchSize(int size) {
+  public AeronSubscription batchSize(int size) {
     if (size < 1) {
       throw new IllegalArgumentException("Poll batch size must be >= 1");
     }
@@ -65,11 +68,12 @@ class AeronSubscriptionImpl implements AeronSubscription, Closeable {
   }
 
   @Override
-  public AeronSubscription setBatchDelay(long delay) {
+  public AeronSubscription batchInterval(long delay, TimeUnit unit) {
     if (delay < 1) {
       throw new IllegalArgumentException("Poll delay must be >= 1");
     }
-    pollDelay = delay;
+    intervalDelay = delay;
+    intervalUnit = unit;
     return this;
   }
 
@@ -104,7 +108,7 @@ class AeronSubscriptionImpl implements AeronSubscription, Closeable {
         numBatch = batchSize / NUM_BUFFER_PER_POLL;
         sub.controlledPoll(fragmentHandler, batchSize % NUM_BUFFER_PER_POLL);
         if (!paused) {
-          context.owner().setTimer(pollDelay, v -> read());
+          context.nettyEventLoop().schedule(this::read, intervalDelay, intervalUnit);
         }
       }
     }
