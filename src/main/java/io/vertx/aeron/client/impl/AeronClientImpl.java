@@ -7,45 +7,93 @@ import io.vertx.aeron.client.AeronClientOptions;
 import io.vertx.aeron.client.AeronPublication;
 import io.vertx.aeron.client.AeronSubscription;
 import io.vertx.core.AsyncResult;
-import io.vertx.core.Context;
+import io.vertx.core.Closeable;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
+import io.vertx.core.impl.ContextInternal;
+import io.vertx.core.impl.VertxInternal;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 
 /**
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
-public class AeronClientImpl implements AeronClient {
+public class AeronClientImpl implements AeronClient, Closeable {
 
-  private final Vertx vertx;
-  private final Aeron.Context context;
+  private static final Logger log = LoggerFactory.getLogger(AeronClientImpl.class);
+  private final VertxInternal vertx;
   private final Aeron aeron;
+  private Handler<Throwable> exceptionHandler;
 
-  public AeronClientImpl(Vertx vertx, AeronClientOptions options) {
-    context = new Aeron.Context();
+  public AeronClientImpl(VertxInternal vertx, AeronClientOptions options) {
+    Aeron.Context aeronContext = new Aeron.Context();
+    aeronContext.errorHandler(t -> {
+      Handler<Throwable> handler = exceptionHandler();
+      if (handler == null) {
+        handler = vertx.exceptionHandler();
+      }
+      if (handler != null) {
+        handler.handle(t);
+      } else {
+        log.error("Unhandled exception", t);
+      }
+    });
     if (options.getDirectory() != null) {
-      context.aeronDirectoryName(options.getDirectory());
+      aeronContext.aeronDirectoryName(options.getDirectory());
     }
-    aeron = Aeron.connect(context);
+    aeron = Aeron.connect(aeronContext);
     this.vertx = vertx;
+    vertx.addCloseHook(this);
   }
 
   @Override
-  public void addPublication(String channel, int streamId, Handler<AsyncResult<AeronPublication>> pubHandler) {
-    Context ctx = vertx.getOrCreateContext();
+  public void close() {
+    vertx.removeCloseHook(this);
+    doClose();
+  }
+
+  private void doClose() {
+    aeron.close();
+  }
+
+  public void close(Handler<AsyncResult<Void>> completionHandler) {
+    try {
+      doClose();
+    } catch (Throwable t) {
+      completionHandler.handle(Future.failedFuture(t));
+      return;
+    }
+    completionHandler.handle(Future.succeededFuture());
+  }
+
+  @Override
+  public AeronClient addPublication(String channel, int streamId, Handler<AsyncResult<AeronPublication>> pubHandler) {
+    ContextInternal ctx = vertx.getOrCreateContext();
     ctx.runOnContext(v -> {
       Publication pub = aeron.addPublication(channel, streamId);
       pubHandler.handle(Future.succeededFuture(new AeronPublicationImpl(ctx, pub)));
     });
+    return this;
   }
 
   @Override
-  public void addSubscription(String channel, int streamId, Handler<AsyncResult<AeronSubscription>> subHandler) {
-    Context ctx = vertx.getOrCreateContext();
+  public AeronClient addSubscription(String channel, int streamId, Handler<AsyncResult<AeronSubscription>> subHandler) {
+    ContextInternal ctx = vertx.getOrCreateContext();
     ctx.runOnContext(v -> {
       AeronSubscriptionImpl sub = new AeronSubscriptionImpl(ctx, aeron.addSubscription(channel, streamId));
       subHandler.handle(Future.succeededFuture(sub));
       sub.read();
     });
+    return this;
+  }
+
+  private synchronized Handler<Throwable> exceptionHandler() {
+    return exceptionHandler;
+  }
+
+  @Override
+  public synchronized AeronClient exceptionHandler(Handler<Throwable> handler) {
+    exceptionHandler = handler;
+    return this;
   }
 }

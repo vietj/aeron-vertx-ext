@@ -2,10 +2,13 @@ package io.vertx.aeron.client.impl;
 
 import io.aeron.Publication;
 import io.vertx.aeron.client.AeronPublication;
-import io.vertx.core.Context;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Closeable;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.impl.ContextInternal;
 import org.agrona.DirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 
@@ -15,7 +18,7 @@ import java.util.ArrayDeque;
 /**
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
-class AeronPublicationImpl implements AeronPublication {
+class AeronPublicationImpl implements AeronPublication, Closeable {
 
   private int maxSize = DEFAULT_MAX_SIZE;
   private int batchSize = DEFAULT_BATCH_SIZE;
@@ -23,7 +26,7 @@ class AeronPublicationImpl implements AeronPublication {
   private long offerRetryDelay = DEFAULT_OFFER_RETRY_DELAY;
   private long connectRetryDelay = DEFAULT_CONNECT_RETRY_DELAY;
 
-  private final Context context;
+  private final ContextInternal context;
   private final Vertx vertx;
   private final Publication pub;
   private final ArrayDeque<DirectBuffer> pending = new ArrayDeque<>();
@@ -32,10 +35,26 @@ class AeronPublicationImpl implements AeronPublication {
   private Handler<Void> drainHandler;
   private Handler<Throwable> exceptionHandler;
 
-  AeronPublicationImpl(Context context, Publication pub) {
+  AeronPublicationImpl(ContextInternal context, Publication pub) {
     this.context = context;
     this.vertx = context.owner();
     this.pub = pub;
+    context.addCloseHook(this);
+  }
+
+  @Override
+  public void close(Handler<AsyncResult<Void>> completionHandler) {
+    try {
+      doClose();
+    } catch (Throwable t) {
+      completionHandler.handle(Future.failedFuture(t));
+      return;
+    }
+    completionHandler.handle(Future.succeededFuture());
+  }
+
+  private void doClose() {
+    pub.close();
   }
 
   @Override
@@ -67,47 +86,47 @@ class AeronPublicationImpl implements AeronPublication {
   }
 
   private void checkPending() {
-    int num = batchSize;
-    while (!pending.isEmpty() && num-- > 0) {
-      DirectBuffer current = pending.peek();
-      long result = pub.offer(current);
-      if (result < 0L) {
-        int retries = offerRetries;
-        while (result < 0L) {
-          if (result == Publication.BACK_PRESSURED || result == Publication.ADMIN_ACTION) {
-            if (retries-- > 0) {
-              Thread.yield();
-              result = pub.offer(current);
+      int num = batchSize;
+      while (!pending.isEmpty() && num-- > 0) {
+        DirectBuffer current = pending.peek();
+        long result = pub.offer(current);
+        if (result < 0L) {
+          int retries = offerRetries;
+          while (result < 0L) {
+            if (result == Publication.BACK_PRESSURED || result == Publication.ADMIN_ACTION) {
+              if (retries-- > 0) {
+                Thread.yield();
+                result = pub.offer(current);
+              } else {
+                schedule(offerRetryDelay, true);
+                return;
+              }
+            } else if (result == Publication.NOT_CONNECTED) {
+              schedule(connectRetryDelay, true);
+              return;
             } else {
-              schedule(offerRetryDelay, true);
+              Handler<Throwable> handler = exceptionHandler;
+              if (handler != null) {
+                ClosedChannelException err = new ClosedChannelException();
+                vertx.runOnContext(v -> {
+                  handler.handle(err);
+                });
+              }
               return;
             }
-          } else if (result == Publication.NOT_CONNECTED) {
-            schedule(connectRetryDelay, true);
-            return;
-          } else {
-            Handler<Throwable> handler = exceptionHandler;
-            if (handler != null) {
-              ClosedChannelException err = new ClosedChannelException();
-              vertx.runOnContext(v -> {
-                handler.handle(err);
-              });
-            }
-            return;
           }
         }
+        pending.remove();
+        pendingSize -= current.capacity();
       }
-      pending.remove();
-      pendingSize -= current.capacity();
-    }
-    if (pending.size() > 0) {
-      schedule(offerRetryDelay, false);
-    }
-    Handler<Void> h = drainHandler;
-    if (pendingSize < maxSize / 2 &&  h != null) {
-      drainHandler = null;
-      h.handle(null);
-    }
+      if (pending.size() > 0) {
+        schedule(offerRetryDelay, false);
+      }
+      Handler<Void> h = drainHandler;
+      if (pendingSize < maxSize / 2 &&  h != null) {
+        drainHandler = null;
+        h.handle(null);
+      }
   }
 
   @Override
@@ -126,8 +145,14 @@ class AeronPublicationImpl implements AeronPublication {
   }
 
   @Override
+  public void close() {
+    context.removeCloseHook(this);
+    doClose();
+  }
+
+  @Override
   public void end() {
-    pub.close();
+    close();
   }
 
   @Override

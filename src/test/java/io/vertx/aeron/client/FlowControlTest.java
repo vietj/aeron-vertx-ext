@@ -1,9 +1,8 @@
 package io.vertx.aeron.client;
 
-import io.vertx.aeron.AeronTestBase;
+import io.vertx.aeron.AeronIPCTestBase;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.streams.ReadStream;
 import io.vertx.core.streams.WriteStream;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
@@ -14,19 +13,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
-public class FlowControlTest extends AeronTestBase {
+public class FlowControlTest extends AeronIPCTestBase {
   
-  private String dirName;
-
-  @Override
-  public void before() {
-    super.before();
-    dirName = createMediaDriver();
-  }
-
   @Test
   public void testSimple(TestContext context) {
-    Vertx vertx = Vertx.vertx();
     AeronClient pubClient = AeronClient.create(vertx, new AeronClientOptions().setDirectory(dirName));
     AeronClient subClient = AeronClient.create(vertx, new AeronClientOptions().setDirectory(dirName));
     final int numBatches = 10000;
@@ -34,7 +24,8 @@ public class FlowControlTest extends AeronTestBase {
     Async done = context.async();
     Async subSync = context.async();
     subClient.addSubscription("aeron:ipc", 10, ar -> {
-      ReadStream<Buffer> consumer = ar.result();
+      AeronSubscription consumer = ar.result();
+      consumer.setBatchSize(1000);
       AtomicInteger cnt = new AtomicInteger();
       consumer.handler(msg -> {
         int c = cnt.incrementAndGet();
@@ -54,7 +45,6 @@ public class FlowControlTest extends AeronTestBase {
 
   @Test
   public void testPauseResume(TestContext context) {
-    Vertx vertx = Vertx.vertx();
     AeronClient pubClient = AeronClient.create(vertx, new AeronClientOptions().setDirectory(dirName));
     AeronClient subClient = AeronClient.create(vertx, new AeronClientOptions().setDirectory(dirName));
     final int numBatches = 10000;
@@ -62,7 +52,8 @@ public class FlowControlTest extends AeronTestBase {
     Async done = context.async();
     Async subSync = context.async();
     subClient.addSubscription("aeron:ipc", 10, ar -> {
-      ReadStream<Buffer> consumer = ar.result();
+      AeronSubscription consumer = ar.result();
+      consumer.setBatchSize(1000);
       AtomicInteger cnt = new AtomicInteger();
       consumer.handler(msg -> {
         int c = cnt.incrementAndGet();

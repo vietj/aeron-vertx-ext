@@ -72,4 +72,6 @@ public interface AeronPublication extends WriteStream<Buffer> {
   @Override
   AeronPublication drainHandler(Handler<Void> handler);
 
+  void close();
+
 }

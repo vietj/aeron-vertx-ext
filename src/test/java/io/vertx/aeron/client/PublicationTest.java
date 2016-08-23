@@ -2,8 +2,7 @@ package io.vertx.aeron.client;
 
 import io.aeron.Aeron;
 import io.aeron.Subscription;
-import io.vertx.aeron.AeronTestBase;
-import io.vertx.core.Vertx;
+import io.vertx.aeron.AeronIPCTestBase;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
@@ -21,19 +20,14 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
-public class PublicationTest extends AeronTestBase {
+public class PublicationTest extends AeronIPCTestBase {
 
-  private String dirName;
-
-  @Override
-  public void before() {
-    super.before();
-    dirName = createMediaDriver();
-  }
-
+//  @Rule
+//  public RepeatRule rule = new RepeatRule();
+//
+//  @Repeat(100000)
   @Test
   public void testBasic() throws Exception {
-    Vertx vertx = Vertx.vertx();
     AeronClient client = AeronClient.create(vertx, new AeronClientOptions().setDirectory(dirName));
     client.addPublication("aeron:ipc", 10, ar -> {
       AeronPublication pub = ar.result();
@@ -64,7 +58,6 @@ public class PublicationTest extends AeronTestBase {
 
   @Test
   public void testBufferWhenNoSubscription(TestContext context) throws Exception {
-    Vertx vertx = Vertx.vertx();
     AeronClient client = AeronClient.create(vertx, new AeronClientOptions().setDirectory(dirName));
     Async async = context.async();
     AtomicInteger expected = new AtomicInteger();
@@ -105,7 +98,6 @@ public class PublicationTest extends AeronTestBase {
 
   @Test
   public void testClosed(TestContext context) throws Exception {
-    Vertx vertx = Vertx.vertx();
     AeronClient client = AeronClient.create(vertx, new AeronClientOptions().setDirectory(dirName));
     Async async = context.async();
     client.addPublication("aeron:ipc", 10, ar -> {

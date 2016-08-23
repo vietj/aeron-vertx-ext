@@ -41,11 +41,15 @@ public class MulticastPublicationTest extends AeronTestBase {
     vertx = Vertx.vertx();
   }
 
+  @Override
+  public void after() {
+    vertx.close();
+    super.after();
+  }
+
   @Test()
-  public void testFoo(TestContext ctx) throws Exception {
-
+  public void testSend(TestContext ctx) throws Exception {
     Async async = ctx.async(3);
-
     AeronClient senderClient = AeronClient.create(vertx, new AeronClientOptions().setDirectory(senderDirName));
     AeronClient receiver1Client = AeronClient.create(vertx, new AeronClientOptions().setDirectory(receiver1DirName));
     AeronClient receiver2Client = AeronClient.create(vertx, new AeronClientOptions().setDirectory(receiver2DirName));

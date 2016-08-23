@@ -12,6 +12,9 @@ import io.vertx.core.streams.ReadStream;
 @VertxGen
 public interface AeronSubscription extends ReadStream<Buffer> {
 
+  int DEFAULT_BATCH_SIZE = 100;
+  long DEFAULT_BATCH_DELAY = 1;
+
   /**
    * Set the number of buffers polled from the {@code Subscription}.
    *
@@ -19,7 +22,7 @@ public interface AeronSubscription extends ReadStream<Buffer> {
    * @return a reference to this, so the API can be used fluently
    */
   @Fluent
-  AeronSubscription setPollBatchSize(int size);
+  AeronSubscription setBatchSize(int size);
 
   /**
    * Set the delay between polls of the {@code Subscription}.
@@ -28,7 +31,7 @@ public interface AeronSubscription extends ReadStream<Buffer> {
    * @return a reference to this, so the API can be used fluently
    */
   @Fluent
-  AeronSubscription setPollDelay(long delay);
+  AeronSubscription setBatchDelay(long delay);
 
   @Override
   AeronSubscription exceptionHandler(Handler<Throwable> handler);
@@ -44,5 +47,7 @@ public interface AeronSubscription extends ReadStream<Buffer> {
 
   @Override
   AeronSubscription endHandler(Handler<Void> endHandler);
+
+  void close();
 
 }
