@@ -20,6 +20,4 @@ public interface AeronClient {
 
   void addSubscription(String channel, int streamId, Handler<AsyncResult<AeronSubscription>> subHandler);
 
-  void addSubscription(String channel, int streamId, AeronSubscriptionOptions options, Handler<AsyncResult<AeronSubscription>> subHandler);
-
 }

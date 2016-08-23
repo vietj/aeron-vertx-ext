@@ -6,7 +6,6 @@ import io.vertx.aeron.client.AeronClient;
 import io.vertx.aeron.client.AeronClientOptions;
 import io.vertx.aeron.client.AeronPublication;
 import io.vertx.aeron.client.AeronSubscription;
-import io.vertx.aeron.client.AeronSubscriptionOptions;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
@@ -17,8 +16,6 @@ import io.vertx.core.Vertx;
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
 public class AeronClientImpl implements AeronClient {
-
-  private static final AeronSubscriptionOptions DEFAULT_SUB_OPTIONS = new AeronSubscriptionOptions();
 
   private final Vertx vertx;
   private final Aeron.Context context;
@@ -44,15 +41,9 @@ public class AeronClientImpl implements AeronClient {
 
   @Override
   public void addSubscription(String channel, int streamId, Handler<AsyncResult<AeronSubscription>> subHandler) {
-    addSubscription(channel, streamId, null, subHandler);
-  }
-
-  @Override
-  public void addSubscription(String channel, int streamId, AeronSubscriptionOptions options, Handler<AsyncResult<AeronSubscription>> subHandler) {
-    AeronSubscriptionOptions effectiveOptions = options != null ? new AeronSubscriptionOptions(options) : DEFAULT_SUB_OPTIONS;
     Context ctx = vertx.getOrCreateContext();
     ctx.runOnContext(v -> {
-      AeronSubscriptionImpl sub = new AeronSubscriptionImpl(ctx, effectiveOptions, aeron.addSubscription(channel, streamId));
+      AeronSubscriptionImpl sub = new AeronSubscriptionImpl(ctx, aeron.addSubscription(channel, streamId));
       subHandler.handle(Future.succeededFuture(sub));
       sub.read();
     });

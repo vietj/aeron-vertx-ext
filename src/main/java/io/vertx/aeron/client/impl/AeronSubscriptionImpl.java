@@ -4,7 +4,6 @@ import io.aeron.ControlledFragmentAssembler;
 import io.aeron.Subscription;
 import io.aeron.logbuffer.ControlledFragmentHandler;
 import io.vertx.aeron.client.AeronSubscription;
-import io.vertx.aeron.client.AeronSubscriptionOptions;
 import io.vertx.core.Context;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
@@ -14,16 +13,34 @@ import io.vertx.core.buffer.Buffer;
  */
 public class AeronSubscriptionImpl implements AeronSubscription {
 
-  private final AeronSubscriptionOptions options;
   private final Context context;
   private final Subscription sub;
   private boolean paused;
   private ControlledFragmentHandler fragmentHandler;
+  private int pollBatchSize = 100;
+  private long pollDelay = 1;
 
-  public AeronSubscriptionImpl(Context context, AeronSubscriptionOptions options, Subscription sub) {
+  public AeronSubscriptionImpl(Context context, Subscription sub) {
     this.context = context;
     this.sub = sub;
-    this.options = options;
+  }
+
+  @Override
+  public AeronSubscription setPollBatchSize(int size) {
+    if (size < 1) {
+      throw new IllegalArgumentException("Poll batch size must be >= 1");
+    }
+    pollBatchSize = size;
+    return this;
+  }
+
+  @Override
+  public AeronSubscription setPollDelay(long delay) {
+    if (delay < 1) {
+      throw new IllegalArgumentException("Poll delay must be >= 1");
+    }
+    pollDelay = delay;
+    return this;
   }
 
   @Override
@@ -48,9 +65,9 @@ public class AeronSubscriptionImpl implements AeronSubscription {
 
   void read() {
     if (!paused) {
-      sub.controlledPoll(fragmentHandler, 100);
+      sub.controlledPoll(fragmentHandler, pollBatchSize);
       if (!paused) {
-        context.owner().setTimer(1, v -> {
+        context.owner().setTimer(pollDelay, v -> {
           read();
         });
       }

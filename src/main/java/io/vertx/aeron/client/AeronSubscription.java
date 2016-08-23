@@ -1,5 +1,6 @@
 package io.vertx.aeron.client;
 
+import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
@@ -10,6 +11,24 @@ import io.vertx.core.streams.ReadStream;
  */
 @VertxGen
 public interface AeronSubscription extends ReadStream<Buffer> {
+
+  /**
+   * Set the number of buffers polled from the {@code Subscription}.
+   *
+   * @param size the number of buffers
+   * @return a reference to this, so the API can be used fluently
+   */
+  @Fluent
+  AeronSubscription setPollBatchSize(int size);
+
+  /**
+   * Set the delay between polls of the {@code Subscription}.
+   *
+   * @param delay the delay in milliseconds
+   * @return a reference to this, so the API can be used fluently
+   */
+  @Fluent
+  AeronSubscription setPollDelay(long delay);
 
   @Override
   AeronSubscription exceptionHandler(Handler<Throwable> handler);
