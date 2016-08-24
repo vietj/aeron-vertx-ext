@@ -1,7 +1,6 @@
 package io.vertx.aeron.client.impl;
 
 import io.aeron.Aeron;
-import io.aeron.Publication;
 import io.vertx.aeron.client.AeronClient;
 import io.vertx.aeron.client.AeronClientOptions;
 import io.vertx.aeron.client.AeronPublication;
@@ -10,10 +9,14 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Closeable;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.impl.ConcurrentHashSet;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
@@ -24,6 +27,8 @@ public class AeronClientImpl implements AeronClient, Closeable {
   private final VertxInternal vertx;
   private final Aeron aeron;
   private Handler<Throwable> exceptionHandler;
+  private final ConcurrentHashSet<AeronPublicationImpl> pubs = new ConcurrentHashSet<>();
+  private final ConcurrentHashSet<AeronSubscriptionImpl> subs = new ConcurrentHashSet<>();
 
   public AeronClientImpl(VertxInternal vertx, AeronClientOptions options) {
     Aeron.Context aeronContext = new Aeron.Context();
@@ -60,6 +65,8 @@ public class AeronClientImpl implements AeronClient, Closeable {
 
   private void doClose() {
     aeron.close();
+    new ArrayList<>(pubs).forEach(AeronPublicationImpl::close);
+    new ArrayList<>(subs).forEach(AeronSubscriptionImpl::close);
   }
 
   public void close(Handler<AsyncResult<Void>> completionHandler) {
@@ -76,8 +83,15 @@ public class AeronClientImpl implements AeronClient, Closeable {
   public AeronClient addPublication(String channel, int streamId, Handler<AsyncResult<AeronPublication>> pubHandler) {
     ContextInternal ctx = vertx.getOrCreateContext();
     ctx.runOnContext(v -> {
-      Publication pub = aeron.addPublication(channel, streamId);
-      pubHandler.handle(Future.succeededFuture(new AeronPublicationImpl(ctx, pub)));
+      Future<AeronPublication> fut = Future.future();
+      try {
+        AeronPublicationImpl pub = new AeronPublicationImpl(ctx, aeron.addPublication(channel, streamId));
+        pubs.add(pub);
+        fut.complete(pub);
+      } catch (Throwable e) {
+        fut.fail(e);
+      }
+      pubHandler.handle(fut);
     });
     return this;
   }
@@ -86,9 +100,18 @@ public class AeronClientImpl implements AeronClient, Closeable {
   public AeronClient addSubscription(String channel, int streamId, Handler<AsyncResult<AeronSubscription>> subHandler) {
     ContextInternal ctx = vertx.getOrCreateContext();
     ctx.runOnContext(v -> {
-      AeronSubscriptionImpl sub = new AeronSubscriptionImpl(ctx, aeron.addSubscription(channel, streamId));
-      subHandler.handle(Future.succeededFuture(sub));
-      sub.read();
+      AeronSubscriptionImpl sub = null;
+      Future<AeronSubscription> fut = Future.future();
+      try {
+        subs.add(sub = new AeronSubscriptionImpl(ctx, aeron.addSubscription(channel, streamId)));
+        fut.complete(sub);
+      } catch (Throwable e) {
+        fut.fail(e);
+      }
+      subHandler.handle(fut);
+      if (sub != null && !sub.isClosed()) {
+        sub.read();
+      }
     });
     return this;
   }

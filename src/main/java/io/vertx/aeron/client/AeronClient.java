@@ -38,6 +38,9 @@ public interface AeronClient {
   @Fluent
   AeronClient exceptionHandler(Handler<Throwable> handler);
 
+  /**
+   * Close the client.
+   */
   void close();
 
 }

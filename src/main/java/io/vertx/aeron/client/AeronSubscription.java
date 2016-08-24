@@ -14,8 +14,19 @@ import java.util.concurrent.TimeUnit;
 @VertxGen
 public interface AeronSubscription extends ReadStream<Buffer> {
 
+  /**
+   * The default batch size: {@code 100}.
+   */
   int DEFAULT_BATCH_SIZE = 100;
+
+  /**
+   * The default batch interval delay: {@code 1}.
+   */
   long DEFAULT_BATCH_INTERVAL_DELAY = 1;
+
+  /**
+   * The default batch interval unit: {@link TimeUnit#MILLISECONDS}.
+   */
   TimeUnit DEFAULT_BATCH_INTERVAL_UNIT = TimeUnit.MILLISECONDS;
 
   /**
@@ -37,6 +48,11 @@ public interface AeronSubscription extends ReadStream<Buffer> {
   @Fluent
   AeronSubscription batchInterval(long delay, TimeUnit unit);
 
+  /**
+   * Close the subscription.
+   */
+  void close();
+
   @Override
   AeronSubscription exceptionHandler(Handler<Throwable> handler);
 
@@ -51,7 +67,5 @@ public interface AeronSubscription extends ReadStream<Buffer> {
 
   @Override
   AeronSubscription endHandler(Handler<Void> endHandler);
-
-  void close();
 
 }

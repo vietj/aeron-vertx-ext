@@ -22,6 +22,7 @@ class AeronSubscriptionImpl implements AeronSubscription, Closeable {
 
   private final ContextInternal context;
   private final Subscription sub;
+  private boolean closed;
   private boolean paused;
   private ControlledFragmentHandler fragmentHandler;
   private int batchSize;
@@ -48,7 +49,13 @@ class AeronSubscriptionImpl implements AeronSubscription, Closeable {
   }
 
   private void doClose() {
-    sub.close();
+    if (!sub.isClosed()) {
+      sub.close();
+    }
+  }
+
+  boolean isClosed() {
+    return sub.isClosed();
   }
 
   @Override

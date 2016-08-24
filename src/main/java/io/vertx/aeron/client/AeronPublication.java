@@ -60,6 +60,11 @@ public interface AeronPublication extends WriteStream<Buffer> {
   @Fluent
   AeronPublication setConnectRetryDelay(int delay);
 
+  /**
+   * Close the publication.
+   */
+  void close();
+
   @Override
   AeronPublication exceptionHandler(Handler<Throwable> handler);
 
@@ -71,7 +76,5 @@ public interface AeronPublication extends WriteStream<Buffer> {
 
   @Override
   AeronPublication drainHandler(Handler<Void> handler);
-
-  void close();
 
 }

@@ -54,7 +54,9 @@ class AeronPublicationImpl implements AeronPublication, Closeable {
   }
 
   private void doClose() {
-    pub.close();
+    if (!pub.isClosed()) {
+      pub.close();
+    }
   }
 
   @Override
