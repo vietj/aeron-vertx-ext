@@ -26,10 +26,11 @@
     <version>20</version>
   </parent>
 
-  <artifactId>vertx-aeron</artifactId>
-  <version>3.4.0-SNAPSHOT</version>
+  <groupId>com.julienviet</groupId>
+  <artifactId>aeron-client-vertx-ext</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
 
-  <name>Vert.x Aeron</name>
+  <name>Aeron client extension for Vert.x</name>
 
   <properties>
     <stack.version>3.3.3</stack.version>
@@ -145,20 +146,5 @@
         </executions>
       </plugin>
     </plugins>
-    <pluginManagement>
-      <plugins>
-
-        <!-- Execute with mvn java:exec -->
-        <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>exec-maven-plugin</artifactId>
-          <version>1.3.2</version>
-          <configuration>
-            <mainClass>io.vertx.ext.shell.Main</mainClass>
-            <classpathScope>test</classpathScope>
-          </configuration>
-        </plugin>
-      </plugins>
-    </pluginManagement>
   </build>
 </project>
